@@ -43,7 +43,7 @@
             <hr/>
         </div>
 
-        <!--lat/long/etc form-->
+        <!--lat/long/etc form, search results-->
         <div class="px-2 float-left mr-1" style="width: 40%;" >
             <div>
                 <h4 align="center">Geocache Serarcher Thing</h4>
@@ -72,10 +72,10 @@
                     <label for="type" class="col-sm-3 col-form-label">Cache type: </label>
                     <div class="col-sm-5">
                             <select id="type" name="type" class="form-control" style="width: 170px;">
-                                <option>Traditional</option>
-                                <option>Mystery/Puzzle</option>
-                                <option>Multi-Cache</option>
-                                <option selected>A N Y</option>
+                                <option value="1">Traditional</option>
+                                <option value="2">Mystery/Puzzle</option>
+                                <option value="3">Multi-Cache</option>
+                                <option value="0" selected=>A N Y</option>
                             </select>
                     </div>
                 </div>
@@ -83,10 +83,10 @@
                     <label for="diff" class="col-sm-3 col-form-label">Difficulty: </label>
                     <div class="col-sm-4">
                             <select id="diff" name="diff" class="form-control" style="width: 170px;">
-                                <option value="baby" selected>Very Easy (1 - 4)</option>
+                                <option value="baby">Baby (1 - 4)</option>
                                 <option value="easy">Easy (5 - 7)</option>
                                 <option value="normal">Normal (8 - 10)</option>
-                                <option value="all">A L L</option>
+                                <option value="all" selected>A L L</option>
                             </select>
                     </div>
                 </div>
@@ -125,24 +125,64 @@
                         $type = $_POST["type"];
                         $diff = $_POST["diff"];
                         $num = $_POST["maxResults"];
+                        $defaultNum = 5;
+                        $maxDiff = 10;
+                        $minDiff = 1;
 
                         $caches = $db->query(
                         "SELECT *
                         FROM test_data
-                        WHERE (longitude BETWEEN ($lon + $radLon) AND ($lon - $radLon)) AND (latitude BETWEEN ($lat + $radLat) AND ($lat - $radLat));
+                        WHERE (
+                        longitude
+                        BETWEEN ($lon - $radLon)
+                        AND ($lon + $radLon)
+                        )
+                        AND (
+                        latitude
+                        BETWEEN ($lat - $radLat)
+                        AND ($lat + $radLat)
+                        )
                         ");
                         ?>
 
                         <!--php code for setting up the table thingy-->
-                        <?php for ($i = 0; $i < $_POST["maxResults"]; $i++) { ?>
-                        <tr>
-                            <th scope="col">Gabe</th>
-                            <th scope="col">Newell</th>
-                            <th scope="col">Is a</th>
-                            <th scope="col">Beast</th>
+                        <?php 
+                            if ($diff == "baby") {
+                                $maxDiff = 4;
+                                $minDiff = 1;
+                            } elseif ($diff == "easy") {
+                                $maxDiff = 7;
+                                $minDiff = 5;
+                            } elseif ($diff == "normal") {
+                                $maxDiff = 10;
+                                $minDiff = 8;
+                            }
+
+                            if (!empty($caches)) { 
+                            $i = 1;
+                            foreach ($caches as $cache) { ?>
+                        <tr>  
+                            <?php 
+                                if ($cache["difficulty_rating"] < $maxDiff && $cache["difficulty_rating"] > $minDiff) {
+                                    if ($cache["cache_type_id"] == $type || $type == 0) {
+                            ?>
+                                <script type="text/javascript">
+                                    var latitude = "<?php echo $cache["latitude"]; ?>";
+                                    var longitude = "<?php echo $cache["longitude"]; ?>";
+                                    addMarker(floatval(latitude), floatvar(longitude));
+                                </script>
+                                <th scope="col"><?php echo $cache["latitude"]; ?></th>
+                                <th scope="col"><?php echo $cache["longitude"]; ?></th>
+                                <th scope="col"><?php echo $cache["difficulty_rating"]; ?></th>
+                                <th scope="col"><?php echo $cache["cache_type_id"]; ?></th>
+                            <?php }}?>                       
+                            
                         </tr>
                         
-                        <?php } ?>
+                        <?php 
+                            $i++;
+                            if ($i > $num && $num != null) {break;} elseif ($i > 5 && $num == null) {break;}
+                            }} ?>
 
                     </thread>
                 </table>
@@ -164,8 +204,6 @@
 
             //new map
             map = new google.maps.Map(document.getElementById('map'), options);
-
-            addMarker(32.2162358, -110.88261449);
 
         }
 
