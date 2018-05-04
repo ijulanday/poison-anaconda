@@ -166,21 +166,22 @@
                                 if ($cache["difficulty_rating"] < $maxDiff && $cache["difficulty_rating"] > $minDiff) {
                                     if ($cache["cache_type_id"] == $type || $type == 0) {
                             ?>
+                                <!--add marker to map-->
                                 <script type="text/javascript">
-                                    var latitude = "<?php echo $cache["latitude"]; ?>";
-                                    var longitude = "<?php echo $cache["longitude"]; ?>";
-                                    addMarker(floatval(latitude), floatvar(longitude));
+                                    var marker = new google.maps.Marker({
+                                        position: {lat: <?php echo $cache["latitude"]; ?>, <?php echo $cache["longitude"]; ?>},
+                                        map: document.getElementById('map')
+                                    });
                                 </script>
                                 <th scope="col"><?php echo $cache["latitude"]; ?></th>
                                 <th scope="col"><?php echo $cache["longitude"]; ?></th>
                                 <th scope="col"><?php echo $cache["difficulty_rating"]; ?></th>
                                 <th scope="col"><?php echo $cache["cache_type_id"]; ?></th>
-                            <?php }}?>                       
+                            <?php $i++;}}?>                       
                             
                         </tr>
                         
                         <?php 
-                            $i++;
                             if ($i > $num && $num != null) {break;} elseif ($i > 5 && $num == null) {break;}
                             }} ?>
 
