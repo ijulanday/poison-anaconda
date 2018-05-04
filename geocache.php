@@ -52,43 +52,41 @@
                 <div class="form-group row">
                     <label for="inputLat" class="col-sm-5 col-form-label">Latitude: </label>
                     <div class="col-sm-5">
-                        <input value="0" type="number" step="0.00000000001" class="form-control" id="inputLat">
+                        <input value="32.2162358" type="number" step="0.00000000001" class="form-control" id="inputLat" name="inputLat">
                     </div>
                 </div>
                 <div class="form-group row">
                     <label for="inputLon" class="col-sm-5 col-form-label">Longitude: </label>
                     <div class="col-sm-5">
-                        <input value="0" type="number" step="0.00000000001" class="form-control" id="inputLon">
+                        <input value="-110.88261449" type="number" step="0.00000000001" class="form-control" id="inputLon" name="inputLon">
                     </div>
                 </div>
                 
                 <div class="form-group row">
                     <label for="radius" class="col-sm-5 col-form-label">Radius (miles): </label>
                     <div class="col-sm-5">
-                        <input type="number" value="0" class="form-control" id="radius">
+                        <input type="number" value="10" class="form-control" id="radius" name="radius">
                     </div>
                 </div>
                 <div class="form-group row">
                     <label for="type" class="col-sm-3 col-form-label">Cache type: </label>
                     <div class="col-sm-5">
-                            <select id="type" class="form-control" style="width: 170px;">
-                                <option selected>whatcha feelin'?</option>
+                            <select id="type" name="type" class="form-control" style="width: 170px;">
                                 <option>Traditional</option>
                                 <option>Mystery/Puzzle</option>
                                 <option>Multi-Cache</option>
-                                <option>A N Y</option>
+                                <option selected>A N Y</option>
                             </select>
                     </div>
                 </div>
                 <div class="form-group row">
                     <label for="diff" class="col-sm-3 col-form-label">Difficulty: </label>
                     <div class="col-sm-4">
-                            <select id="diff" class="form-control" style="width: 170px;">
-                                <option selected>choose wisely...</option>
-                                <option>Very Easy</option>
-                                <option>Easy</option>
-                                <option>Normal</option>
-                                <option>A L L</option>
+                            <select id="diff" name="diff" class="form-control" style="width: 170px;">
+                                <option value="baby" selected>Very Easy (1 - 4)</option>
+                                <option value="easy">Easy (5 - 7)</option>
+                                <option value="normal">Normal (8 - 10)</option>
+                                <option value="all">A L L</option>
                             </select>
                     </div>
                 </div>
@@ -96,11 +94,11 @@
                 <div class="form-group row">
                     <label for="maxResults" class="col-sm-3 col-form-label">Max Results: </label>
                     <div class="col-sm-4">
-                        <input type="number" max="20" value="0" class="form-control" id="maxResults" name="maxResults">
+                        <input type="number" max="20" value="5" class="form-control" id="maxResults" name="maxResults">
                     </div>
                 </div>
 
-                <button onclick="getCaches();" type="submit" class="btn btn-primary">Search!</button>
+                <button onclick="getCaches();" type="submit" class="btn btn-primary">Search!</button> <-- Try it!
                 </form>
                 <hr/>
             </div>
@@ -118,6 +116,24 @@
                         </tr>
 
                         <!--php code for getting cache search results-->
+                        <?php 
+                        $db = new PDO("mysql:host=150.135.53.5;dbname=test;port=3306", "student", "B3@rD0wn!");
+                        $lat = $_POST["inputLat"];
+                        $lon = $_POST["inputLon"];
+                        $radLat = $_POST["radius"] * 69;
+                        $radLon = (cos($radLat) / 180) * 69;
+                        $type = $_POST["type"];
+                        $diff = $_POST["diff"];
+                        $num = $_POST["maxResults"];
+
+                        $caches = $db->query(
+                        "SELECT *
+                        FROM test_data
+                        WHERE (longitude BETWEEN ($lon + $radLon) AND ($lon - $radLon)) AND (latitude BETWEEN ($lat + $radLat) AND ($lat - $radLat));
+                        ");
+                        ?>
+
+                        <!--php code for setting up the table thingy-->
                         <?php for ($i = 0; $i < $_POST["maxResults"]; $i++) { ?>
                         <tr>
                             <th scope="col">Gabe</th>
@@ -138,24 +154,27 @@
         <!--google map api script thingy-->
         <script>
         var map;
-        function initMap() {
-            
-            //map optionz
-            var options = {
+        //map optionz
+        var options = {
             center: {lat: 32.2162358, lng: -110.88261449},
             zoom: 10
-            }
+        };
+
+        function initMap() {
 
             //new map
-            var map = new google.maps.Map(document.getElementById('map'), options);
-    
-            //add marker
-            function addMarker(lat, lon) {
-                var marker = new google.maps.Marker({
+            map = new google.maps.Map(document.getElementById('map'), options);
+
+            addMarker(32.2162358, -110.88261449);
+
+        }
+
+        //add marker
+        function addMarker(lat, lon) {
+            var marker = new google.maps.Marker({
                 position: {lat: lat, lng: lon},
                 map: map
             });
-            }
         }
         </script>
         <script src="https://maps.googleapis.com/maps/api/js?key= AIzaSyBENZ68e3RP9aIlqyB8QHBBwG1n4hWyRqs&callback=initMap"
