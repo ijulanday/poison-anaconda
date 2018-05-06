@@ -52,20 +52,20 @@
                 <div class="form-group row">
                     <label for="inputLat" class="col-sm-5 col-form-label">Latitude: </label>
                     <div class="col-sm-5">
-                        <input value="32.2162358" type="number" step="0.00000000001" class="form-control" id="inputLat" name="inputLat">
+                        <input value="<?php echo isset($_POST['inputLat']) ? $_POST['inputLat'] : '32.2162358' ?>" type="number" step="0.00000000001" class="form-control" id="inputLat" name="inputLat">
                     </div>
                 </div>
                 <div class="form-group row">
                     <label for="inputLon" class="col-sm-5 col-form-label">Longitude: </label>
                     <div class="col-sm-5">
-                        <input value="-110.88261449" type="number" step="0.00000000001" class="form-control" id="inputLon" name="inputLon">
+                        <input value="<?php echo isset($_POST['inputLon']) ? $_POST['inputLon'] : '-110.88261449' ?>" type="number" step="0.00000000001" class="form-control" id="inputLon" name="inputLon">
                     </div>
                 </div>
                 
                 <div class="form-group row">
                     <label for="radius" class="col-sm-5 col-form-label">Radius (miles): </label>
                     <div class="col-sm-5">
-                        <input type="number" value="10" class="form-control" id="radius" name="radius">
+                        <input type="number" value="<?php echo isset($_POST['radius']) ? $_POST['radius'] : '10' ?>" step="5" max="200" class="form-control" id="radius" name="radius">
                     </div>
                 </div>
                 <div class="form-group row">
@@ -75,7 +75,7 @@
                                 <option value="1">Traditional</option>
                                 <option value="2">Mystery/Puzzle</option>
                                 <option value="3">Multi-Cache</option>
-                                <option value="0" selected=>A N Y</option>
+                                <option value="0" selected>A N Y</option>
                             </select>
                     </div>
                 </div>
@@ -86,7 +86,7 @@
                                 <option value="baby">Baby (1 - 4)</option>
                                 <option value="easy">Easy (5 - 7)</option>
                                 <option value="normal">Normal (8 - 10)</option>
-                                <option value="all" selected>A L L</option>
+                                <option selected>A L L</option>
                             </select>
                     </div>
                 </div>
@@ -94,7 +94,7 @@
                 <div class="form-group row">
                     <label for="maxResults" class="col-sm-3 col-form-label">Max Results: </label>
                     <div class="col-sm-4">
-                        <input type="number" max="20" value="5" class="form-control" id="maxResults" name="maxResults">
+                        <input type="number" max="200" step="10" class="form-control" id="maxResults" name="maxResults" value="<?php echo isset($_POST['maxResults']) ? $_POST['maxResults'] : '20' ?>">
                     </div>
                 </div>
 
@@ -120,14 +120,15 @@
                         $db = new PDO("mysql:host=150.135.53.5;dbname=test;port=3306", "student", "B3@rD0wn!");
                         $lat = $_POST["inputLat"];
                         $lon = $_POST["inputLon"];
-                        $radLat = $_POST["radius"] * 69;
-                        $radLon = (cos($radLat) / 180) * 69;
+                        $radLat = $_POST["radius"] / 69.0;
+                        $radLon = $_POST["radius"] * (1 / ((cos($lat)) * 69.0));
                         $type = $_POST["type"];
                         $diff = $_POST["diff"];
                         $num = $_POST["maxResults"];
                         $defaultNum = 5;
                         $maxDiff = 10;
                         $minDiff = 1;
+                        $cacheArray = [];
 
                         $caches = $db->query(
                         "SELECT *
@@ -143,6 +144,23 @@
                         AND ($lat + $radLat)
                         )
                         ");
+
+                        $q2 = $db->query(
+                        "SELECT *
+                        FROM test_data
+                        WHERE (
+                        longitude
+                        BETWEEN ($lon - $radLon)
+                        AND ($lon + $radLon)
+                        )
+                        AND (
+                        latitude
+                        BETWEEN ($lat - $radLat)
+                        AND ($lat + $radLat)
+                        )
+                        ")->fetchAll();
+                        $jsonCache = json_encode($q2);
+
                         ?>
 
                         <!--php code for setting up the table thingy-->
@@ -160,19 +178,15 @@
 
                             if (!empty($caches)) { 
                             $i = 1;
+
                             foreach ($caches as $cache) { ?>
                         <tr>  
                             <?php 
                                 if ($cache["difficulty_rating"] < $maxDiff && $cache["difficulty_rating"] > $minDiff) {
                                     if ($cache["cache_type_id"] == $type || $type == 0) {
+                                        array_push($cacheArray, $cache["latitude"], $cache["longitude"]);
                             ?>
                                 <!--add marker to map-->
-                                <script type="text/javascript">
-                                    var marker = new google.maps.Marker({
-                                        position: {lat: <?php echo $cache["latitude"]; ?>, <?php echo $cache["longitude"]; ?>},
-                                        map: document.getElementById('map')
-                                    });
-                                </script>
                                 <th scope="col"><?php echo $cache["latitude"]; ?></th>
                                 <th scope="col"><?php echo $cache["longitude"]; ?></th>
                                 <th scope="col"><?php echo $cache["difficulty_rating"]; ?></th>
@@ -192,24 +206,34 @@
 
         <!--map bit-->
         <div id="map"></div>
+
+        <!--lemme see my json stuff!-->
+        <div><?php echo $jsonCache;?></div>
+
         <!--google map api script thingy-->
         <script>
         var map;
+        var coordJSON = <?php echo json_encode($cacheArray);?>;
+        var jsonCache = <?php echo $jsonCache;?>;
+        alert(jsonCache[0].latitude);
         //map optionz
         var options = {
-            center: {lat: 32.2162358, lng: -110.88261449},
+            center: {lat: <?php echo $_POST["inputLat"]; ?>, lng: <?php echo $_POST["inputLon"]; ?>},
             zoom: 10
         };
 
         function initMap() {
-
             //new map
             map = new google.maps.Map(document.getElementById('map'), options);
-
+            
+            //add markers to map
+            for (var i = 0; i < coordJSON.length; i++) {
+                addMarker(parseFloat(jsonCache[i].latitude),  parseFloat(jsonCache[i].longitude));
+            }
         }
 
         //add marker
-        function addMarker(lat, lon) {
+        function addMarker(lat, lon, diff, type) {
             var marker = new google.maps.Marker({
                 position: {lat: lat, lng: lon},
                 map: map
