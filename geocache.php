@@ -211,9 +211,6 @@
         <!--map bit-->
         <div id="map"></div>
 
-        <div>
-            <?php echo $type; ?>
-        </div>
 
         <!--google map api script thingy-->
         <script>
@@ -223,7 +220,7 @@
         //map optionz
         var options = {
             center: {lat: <?php echo $_POST["inputLat"]; ?>, lng: <?php echo $_POST["inputLon"]; ?>},
-            zoom: 10
+            zoom: 9
         };
 
         function initMap() {
@@ -233,7 +230,7 @@
             //add markers to map
             var i = 0;
             var j = 0;
-            while (i < jsonCache.length && j < jsonCache.length) {
+            while (i < jsonCache.length && i < <?php echo $num;?>) {
                 if (jsonCache[i].difficulty_rating < <?php echo $maxDiff ?>
                 && jsonCache[i].difficulty_rating > <?php echo $minDiff ?>) {
                     if (jsonCache[i].cache_type_id == <?php echo $type ?>
@@ -243,6 +240,19 @@
                 }
                 i++;
             }
+
+            var rectangle = new google.maps.Rectangle({
+                strokeColor: '#FF0000',
+                strokeOpacity: 0.8,
+                strokeWeight: 1,
+                map: map,
+                bounds: {
+                    north: <?php echo ($lat + $radLat) ?>,
+                    south: <?php echo ($lat - $radLat) ?>,
+                    east: <?php echo ($lon + $radLon) ?>,
+                    west: <?php echo ($lon - $radLon) ?>
+                }
+            });
         }
 
         //add a marker and stuff
