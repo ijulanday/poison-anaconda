@@ -32,7 +32,12 @@
             }
         </style>
 
-   
+        <!--ajax crap--> 
+        <script src="http://ajax.googleapis.com/ajax/libs/prototype/1.6.1.0/prototype.js" type="text/javascript"></script>
+		<script src="http://ajax.googleapis.com/ajax/libs/scriptaculous/1.8.3/scriptaculous.js" type="text/javascript"></script>
+
+        <!--more ajax (jquery pls)-->
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
     </head>
     
     
@@ -94,7 +99,7 @@
                 <div class="form-group row">
                     <label for="maxResults" class="col-sm-3 col-form-label">Max Results: </label>
                     <div class="col-sm-4">
-                        <input type="number" max="200" step="10" class="form-control" id="maxResults" name="maxResults" value="<?php echo isset($_POST['maxResults']) ? $_POST['maxResults'] : '20' ?>">
+                        <input type="number" max="200" step="1" class="form-control" id="maxResults" name="maxResults" value="<?php echo isset($_POST['maxResults']) ? $_POST['maxResults'] : '20' ?>">
                     </div>
                 </div>
 
@@ -178,7 +183,7 @@
 
                             if (!empty($caches)) { 
                             $i = 1;
-
+                            $cacheNum = 0;
                             foreach ($caches as $cache) { ?>
                         <tr>  
                             <?php 
@@ -191,7 +196,7 @@
                                 <th scope="col"><?php echo $cache["longitude"]; ?></th>
                                 <th scope="col"><?php echo $cache["difficulty_rating"]; ?></th>
                                 <th scope="col"><?php echo $cache["cache_type_id"]; ?></th>
-                            <?php $i++;}}?>                       
+                            <?php $i++; $cacheNum++;}}?>                       
                             
                         </tr>
                         
@@ -207,15 +212,11 @@
         <!--map bit-->
         <div id="map"></div>
 
-        <!--lemme see my json stuff!-->
-        <div><?php echo $jsonCache;?></div>
-
         <!--google map api script thingy-->
         <script>
         var map;
-        var coordJSON = <?php echo json_encode($cacheArray);?>;
         var jsonCache = <?php echo $jsonCache;?>;
-        alert(jsonCache[0].latitude);
+        
         //map optionz
         var options = {
             center: {lat: <?php echo $_POST["inputLat"]; ?>, lng: <?php echo $_POST["inputLon"]; ?>},
@@ -227,17 +228,70 @@
             map = new google.maps.Map(document.getElementById('map'), options);
             
             //add markers to map
-            for (var i = 0; i < coordJSON.length; i++) {
-                addMarker(parseFloat(jsonCache[i].latitude),  parseFloat(jsonCache[i].longitude));
+            for (var i = 0; i < <?php echo $cacheNum; ?>; i++) {
+                addMarker(jsonCache[i]);
             }
         }
 
-        //add marker
-        function addMarker(lat, lon, diff, type) {
+        //add a marker and stuff
+        function addMarker(jcache) {
+            var type = ["Traditional", "Mystery/Puzzle", "Multi-Cache"];
+            var flickrUrl = "https://api.flickr.com/services/rest/?api_key=6652e444acd4fb5cebeb6e7608de8384&method=flickr.photos.search&lat="
+            +jcache.latitude.toString()+"&lon="+jcache.longitude.toString();
+            var imgs = [];
+            
+
+
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.open("GET", flickrUrl, true);
+            xmlhttp.onreadystatechange = function() {
+                if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {//the below code is similar to the callback function onSuccess in Ajax.Request
+                    var rsp = xmlhttp.responseXML.getElementsByTagName("rsp")[0];
+                    var photos = rsp.getElementsByTagName("photos")[0].getElementsByTagName("photo");
+                    for (var i = 0; i < 6; i++) {
+                        var imgurl = "https://farm"
+                                    +photos[i].getAttribute("farm")+
+                                    ".staticflickr.com/"
+                                    +photos[i].getAttribute("server")+
+                                    "/"+photos[i].getAttribute("id")+
+                                    "_"+photos[i].getAttribute("secret")+
+                                    "_t.jpg";
+                        imgs.push("<img src=\"" + imgurl + "\" vspace=\"10px\" hspace=\"10px\">");
+                        
+                        //hey this function call sucks, i need to figure out how
+                        //  promises work and how to actually do ajax stuff because
+                        //  this is super hacky
+                        setUpInfo(i);
+                    }
+                }
+                
+            };
+            xmlhttp.send();
+
             var marker = new google.maps.Marker({
-                position: {lat: lat, lng: lon},
-                map: map
+                position: {lat: parseFloat(jcache.latitude), lng: parseFloat(jcache.longitude)},
+                map: map,
             });
+            
+            //ewwwww asynchronous code hurts my brain
+            function setUpInfo(i) {
+                if (i != 5) {return;}
+                marker.addListener('click', function(){
+                info.open(map, marker);
+                });
+
+                var info = new google.maps.InfoWindow({
+                    content: (
+                        '<h3>Latitude: ' + jcache.latitude + '<br/>Longitude: ' + jcache.longitude + '</h3>'
+                        + '<h5>' + 'Type: ' + type[parseInt(jcache.cache_type_id) - 1]
+                        + '<br/>Difficulty: ' + jcache.difficulty_rating
+                        + '</h5>' + '<p> photos taken near here:<br/>'
+                        + imgs[0] + imgs[1] + imgs[2] + '<br/>' 
+                        + imgs[3] + imgs[4] + imgs[5]
+                    )
+                });
+            }
+            
         }
         </script>
         <script src="https://maps.googleapis.com/maps/api/js?key= AIzaSyBENZ68e3RP9aIlqyB8QHBBwG1n4hWyRqs&callback=initMap"
