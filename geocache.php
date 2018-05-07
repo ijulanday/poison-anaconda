@@ -184,7 +184,7 @@
                             if (!empty($caches)) { 
                             $i = 1;
                             $cacheNum = 0;
-                            foreach ($caches as $cache) { ?>
+                            foreach ($jsonCache as $cache) { ?>
                         <tr>  
                             <?php 
                                 if ($cache["difficulty_rating"] < $maxDiff && $cache["difficulty_rating"] > $minDiff) {
@@ -211,6 +211,10 @@
 
         <!--map bit-->
         <div id="map"></div>
+
+        <div>
+            <?php echo $type; ?>
+        </div>
 
         <!--google map api script thingy-->
         <script>
