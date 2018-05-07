@@ -126,7 +126,7 @@
                         $lat = $_POST["inputLat"];
                         $lon = $_POST["inputLon"];
                         $radLat = $_POST["radius"] / 69.0;
-                        $radLon = $_POST["radius"] * (1 / ((cos($lat)) * 69.0));
+                        $radLon = $_POST["radius"] * abs((1 / ((cos($lat)) * 69.0)));
                         $type = $_POST["type"];
                         $diff = $_POST["diff"];
                         $num = $_POST["maxResults"];
@@ -237,10 +237,8 @@
         function addMarker(jcache) {
             var type = ["Traditional", "Mystery/Puzzle", "Multi-Cache"];
             var flickrUrl = "https://api.flickr.com/services/rest/?api_key=6652e444acd4fb5cebeb6e7608de8384&method=flickr.photos.search&lat="
-            +jcache.latitude.toString()+"&lon="+jcache.longitude.toString();
+            +jcache.latitude+"&lon="+jcache.longitude;
             var imgs = [];
-            
-
 
             var xmlhttp = new XMLHttpRequest();
             xmlhttp.open("GET", flickrUrl, true);
@@ -294,6 +292,8 @@
             
         }
         </script>
+
+
         <script src="https://maps.googleapis.com/maps/api/js?key= AIzaSyBENZ68e3RP9aIlqyB8QHBBwG1n4hWyRqs&callback=initMap"
         async defer></script>
 
