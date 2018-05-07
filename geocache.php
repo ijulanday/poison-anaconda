@@ -184,12 +184,11 @@
                             if (!empty($caches)) { 
                             $i = 1;
                             $cacheNum = 0;
-                            foreach ($jsonCache as $cache) { ?>
+                            foreach ($caches as $cache) { ?>
                         <tr>  
                             <?php 
                                 if ($cache["difficulty_rating"] < $maxDiff && $cache["difficulty_rating"] > $minDiff) {
                                     if ($cache["cache_type_id"] == $type || $type == 0) {
-                                        array_push($cacheArray, $cache["latitude"], $cache["longitude"]);
                             ?>
                                 <!--add marker to map-->
                                 <th scope="col"><?php echo $cache["latitude"]; ?></th>
@@ -232,8 +231,17 @@
             map = new google.maps.Map(document.getElementById('map'), options);
             
             //add markers to map
-            for (var i = 0; i < <?php echo $cacheNum; ?>; i++) {
-                addMarker(jsonCache[i]);
+            var i = 0;
+            var j = 0;
+            while (i < jsonCache.length && j < jsonCache.length) {
+                if (jsonCache[i].difficulty_rating < <?php echo $maxDiff ?>
+                && jsonCache[i].difficulty_rating > <?php echo $minDiff ?>) {
+                    if (jsonCache[i].cache_type_id == <?php echo $type ?>
+                    || <?php echo $type ?> == 0) {
+                        addMarker(jsonCache[i]);
+                    }
+                }
+                i++;
             }
         }
 
