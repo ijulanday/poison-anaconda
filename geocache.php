@@ -304,5 +304,7 @@
 
         <!--mys tuff-->
         <script src="search.js"></script>
+
+        <!--Autorz' nose: flicker API *frickn sucks*. The people who coded it are probs geniuses but I, however, am not.-->
     </body>
 </html>
